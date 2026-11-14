@@ -22,3 +22,8 @@ python -m uvicorn app.main:app --reload
 
 ## Run Tests
 python -m pytest -v
+venv\Scripts\Activate.ps1
+
+#
+PS E:\git_ny_project\enterprise-ai-incident-intelligence> python -m venv venv
+PS E:\git_ny_project\enterprise-ai-incident-intelligence> venv\Scripts\Activate.ps1
