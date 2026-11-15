@@ -1,20 +1,14 @@
-# Implement business logic
-
-
 
 from uuid import UUID
 
 from fastapi import HTTPException, status
 
-from app.repositories.incident_repository import incident_repository
-from app.schemas.incident import (
-    IncidentCreate,
-    IncidentStatus,
-    IncidentResponse,
-)
+from app.repositories.incident_repository import IncidentRepository
+from app.schemas.incident import IncidentCreate, IncidentStatus
 
 
-# Defines which status transitions are allowed.
+# Defines which incident lifecycle transitions are permitted.
+# Keeping these rules in the service prevents invalid business operations.
 ALLOWED_TRANSITIONS = {
     IncidentStatus.NEW: [
         IncidentStatus.ACKNOWLEDGED,
@@ -37,13 +31,25 @@ ALLOWED_TRANSITIONS = {
 
 
 class IncidentService:
+    """
+    Contains incident business rules.
+
+    It delegates database operations to IncidentRepository.
+    """
+
+    def __init__(self, repository: IncidentRepository):
+        # Receive the repository created for this request.
+        self.repository = repository
 
     def create_incident(self, data: IncidentCreate):
-        return incident_repository.create(data)
+        # Delegate incident creation to the database repository.
+        return self.repository.create(data)
 
     def get_incident(self, incident_id: UUID):
-        incident = incident_repository.get_by_id(incident_id)
+        # Retrieve the incident from PostgreSQL.
+        incident = self.repository.get_by_id(incident_id)
 
+        # Return HTTP 404 if the incident does not exist.
         if incident is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -53,29 +59,29 @@ class IncidentService:
         return incident
 
     def list_incidents(self):
-        return incident_repository.list_all()
+        # Delegate the database query to the repository.
+        return self.repository.list_all()
 
     def update_status(
         self,
         incident_id: UUID,
         new_status: IncidentStatus,
-    ) -> IncidentResponse:
-
+    ):
+        # First confirm that the incident exists.
         incident = self.get_incident(incident_id)
 
+        # Find the permitted next statuses for its current status.
         allowed = ALLOWED_TRANSITIONS[incident.status]
 
+        # Reject transitions that violate the incident lifecycle.
         if new_status not in allowed:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid transition: {incident.status} to {new_status}",
+                detail=(
+                    f"Invalid transition: "
+                    f"{incident.status} to {new_status}"
+                ),
             )
 
-        return incident_repository.update_status(
-            incident_id,
-            new_status,
-        )
-
-
-# Shared service instance for the API router.
-incident_service = IncidentService()
+        # Persist the approved status change in PostgreSQL.
+        return self.repository.update_status(incident_id, new_status)

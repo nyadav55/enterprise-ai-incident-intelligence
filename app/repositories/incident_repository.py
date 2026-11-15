@@ -1,69 +1,76 @@
 
+from uuid import UUID
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.models.incident import Incident
+from app.schemas.incident import IncidentCreate, IncidentStatus
 
 
-from datetime import datetime, timezone
-from uuid import UUID, uuid4
-
-from app.schemas.incident import (
-    IncidentCreate,
-    IncidentResponse,
-    IncidentStatus,
-)
-
-
-# Temporary storage for our first working API.
-# This data disappears when the application restarts.
 class IncidentRepository:
+    """
+    Handles all database operations for incidents.
 
-# __init__() method is a constructor which is automatically called when a new object of a class is created. 
-    def __init__(self):
-# • single leading underscore (_) is a Python naming convention indicating that this variable is intended for internal or "private" use within the class.
-        
-        self._incidents: dict[UUID, IncidentResponse] = {}
+    The repository receives a database session from FastAPI.
+    It does not create or manage a global database connection.
+    """
 
-    def create(self, data: IncidentCreate) -> IncidentResponse:
-        now = datetime.now(timezone.utc)
+    def __init__(self, db: Session):
+        # Store the session for this particular API request.
+        self.db = db
 
-        incident = IncidentResponse(
-            id=uuid4(),
+    def create(self, data: IncidentCreate) -> Incident:
+        # Convert validated API input into a SQLAlchemy database object.
+        incident = Incident(
             title=data.title,
             description=data.description,
             severity=data.severity,
             status=IncidentStatus.NEW,
             source=data.source,
-            created_at=now,
-            updated_at=now,
         )
 
-        self._incidents[incident.id] = incident
+        # Stage the new incident for insertion into PostgreSQL.
+        self.db.add(incident)
+
+        # Commit the transaction so the record is permanently stored.
+        self.db.commit()
+
+        # Refresh the object to load database-generated/default values.
+        self.db.refresh(incident)
+
         return incident
 
-    def get_by_id(self, incident_id: UUID):
-        return self._incidents.get(incident_id)
+    def get_by_id(self, incident_id: UUID) -> Incident | None:
+        # Fetch one incident using its primary key.
+        return self.db.get(Incident, incident_id)
 
-    def list_all(self):
-        return list(self._incidents.values())
+    def list_all(self) -> list[Incident]:
+        # Build a query that returns the newest incidents first.
+        query = select(Incident).order_by(Incident.created_at.desc())
+
+        # Execute the query and return all matching ORM objects.
+        return list(self.db.scalars(query).all())
 
     def update_status(
         self,
         incident_id: UUID,
-        status: IncidentStatus,
-    ):
+        new_status: IncidentStatus,
+    ) -> Incident | None:
+        # Find the incident that needs to be updated.
         incident = self.get_by_id(incident_id)
 
+        # Return None if the requested incident does not exist.
         if incident is None:
             return None
 
-        updated = incident.model_copy(
-            update={
-                "status": status,
-                "updated_at": datetime.now(timezone.utc),
-            }
-        )
+        # Update the status on the SQLAlchemy object.
+        incident.status = new_status
 
-        self._incidents[incident_id] = updated
-        return updated
+        # SQLAlchemy's onupdate setting updates updated_at on this change.
+        self.db.commit()
 
+        # Reload the updated values from PostgreSQL.
+        self.db.refresh(incident)
 
-# One repository instance shared by this application process.
-incident_repository = IncidentRepository()
+        return incident

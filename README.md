@@ -25,5 +25,7 @@ python -m pytest -v
 venv\Scripts\Activate.ps1
 
 # env and active
+ 
 PS E:\git_ny_project\enterprise-ai-incident-intelligence> python -m venv venv
 PS E:\git_ny_project\enterprise-ai-incident-intelligence> venv\Scripts\Activate.ps1
+OR .\.venv\Scripts\Activate.ps1 
