@@ -1,11 +1,14 @@
+# architecture 
+# API → Service → Repository → PostgreSQL
+#        Business    Database
+#         rules      queries
 
 from uuid import UUID
 
 from fastapi import HTTPException, status
 
 from app.repositories.incident_repository import IncidentRepository
-from app.schemas.incident import IncidentCreate, IncidentStatus
-
+from app.schemas.incident import IncidentCreate, IncidentStatus, IncidentSeverity
 
 # Defines which incident lifecycle transitions are permitted.
 # Keeping these rules in the service prevents invalid business operations.
@@ -58,9 +61,22 @@ class IncidentService:
 
         return incident
 
-    def list_incidents(self):
-        # Delegate the database query to the repository.
-        return self.repository.list_all()
+    def list_incidents(
+        self,
+        skip: int = 0,
+        limit: int = 10,
+        severity: IncidentSeverity | None = None,
+        status: IncidentStatus | None = None,
+        search: str | None = None,
+    ):
+        # Pass pagination and filters to the repository.
+        return self.repository.list_all(
+            skip=skip,
+            limit=limit,
+            severity=severity,
+            status=status,
+            search=search,
+        )
 
     def update_status(
         self,

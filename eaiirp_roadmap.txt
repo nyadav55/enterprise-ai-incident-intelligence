@@ -1,0 +1,101 @@
+EAII Project – Day-wise Development Roadmap
+Enterprise AI Incident Intelligence & Response Platform
+
+Target: Production-oriented flagship project demonstrating Solution Architecture, Python, GenAI, RAG, Agentic AI, MCP, security and DevOps.
+
+Estimated duration: 30 working days, approximately 3 hours daily.
+Phase 1 – Backend Foundation
+Days 1–3 completed
+Day	Tasks	Deliverable
+1	Project setup, Git, Python virtual environment, FastAPI, folder structure, health API	Running application
+2	Incident schemas, Pydantic validation, repository, service layer, REST APIs	Incident CRUD APIs
+3	PostgreSQL, SQLAlchemy, Alembic migrations, test database, pytest	Database integration, 5 passing tests
+
+Phase 2 – Enterprise Backend
+Days 4–8
+Day	Tasks	Deliverable
+4	Pagination, filtering, searching, API error handling	Improved incident APIs
+5	Logging, configuration, environment management	Production-ready configuration
+6	Authentication, JWT, role-based access control	Secure APIs
+7	Audit logging and incident history	Audit trail
+8	Unit tests, integration tests, API documentation	Backend milestone
+
+Phase 3 – Incident Intelligence and RAG
+Days 9–14
+Day	Tasks	Deliverable
+9	Incident knowledge-base design	Knowledge architecture
+10	Upload runbooks, PDFs, incident documents	Document ingestion
+11	Chunking, embeddings, vector database with pgvector	Vector storage
+12	Semantic search and metadata filtering	Retrieval API
+13	Hybrid search, BM25, reranking	Improved retrieval
+14	RAG pipeline with citations and grounded answers	Working RAG application
+
+Phase 4 – Agentic AI and MCP
+Days 15–20
+Day	Tasks	Deliverable
+15	LLM integration using Ollama/mock provider	LLM service
+16	LangGraph state and workflow	Agent orchestration
+17	Planner and investigator agents	Investigation workflow
+18	MCP server and read-only tools	Controlled tool integration
+19	Reviewer agent, confidence and hallucination checks	Evidence-based RCA
+20	End-to-end incident investigation	Working Agentic AI workflow
+
+Phase 5 – Enterprise Security and Reliability
+Days 21–25
+Day	Tasks	Deliverable
+21	Prompt injection protection and input validation	AI security
+22	Human approval workflow	Human-in-the-loop
+23	Redis caching and background workers	Performance improvement
+24	Retry, timeout, circuit breaker, failure handling	Reliability
+25	AI evaluation: recall@k, groundedness, citation coverage, latency	Evaluation framework
+
+Phase 6 – DevOps and Deployment
+Days 26–30
+Day	Tasks	Deliverable
+26	Dockerize application and worker	Containerized application
+27	GitHub Actions CI/CD	Automated pipeline
+28	OpenTelemetry, Prometheus, Grafana	Observability
+29	Load testing, security testing, failure scenarios	Production validation
+30	Architecture documentation, demo, README, interview preparation	Portfolio-ready project
+
+
+Target architecture
+        Users / Operations Team
+                  |
+             FastAPI APIs
+                  |
+       Authentication + RBAC
+                  |
+          Incident Management
+                  |
+          PostgreSQL + Redis
+                  |
+          Background Worker
+                  |
+           LangGraph Workflow
+                  |
+       +----------+-----------+
+       |          |           |
+     Planner  Investigator  Reviewer
+       |          |           |
+       +----------+-----------+
+                  |
+             RAG Pipeline
+                  |
+       PostgreSQL + pgvector
+                  |
+            MCP Read Tools
+                  |
+       Runbooks / Logs / History
+                  |
+       Evidence + RCA + Recommendation
+                  |
+          Human Approval
+
+
+Daily working approach
+For each day, we'll follow this pattern:
+- 30 minutes: Understand the real-world problem and architecture.
+- 90 minutes: Implement step by step with commented code.
+- 30 minutes: Test and debug.
+- 30 minutes: Understand design decisions and prepare interview questions.

@@ -7,6 +7,7 @@ from sqlalchemy import pool
 from sqlalchemy import create_engine
 from alembic import context
 
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -21,7 +22,8 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 from app.core.database import Base
-from app.models.incident import Incident
+# Register both models so Alembic detects their database tables.
+from app.models import Incident, User
 
 # Alembic reads SQLAlchemy model metadata to detect schema changes.
 target_metadata = Base.metadata

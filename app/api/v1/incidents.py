@@ -12,7 +12,7 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 
 # Database session dependency.
@@ -27,8 +27,11 @@ from app.schemas.incident import (
     IncidentCreate,
     IncidentResponse,
     IncidentStatusUpdate,
+    IncidentSeverity, IncidentStatus
 )
 
+from app.core.dependencies import get_current_user, require_roles
+from app.models.user import User, UserRole
 
 router = APIRouter(
     prefix="/incidents",
@@ -57,16 +60,30 @@ def get_incident_service(
 def create_incident(
     data: IncidentCreate,
     service: IncidentService = Depends(get_incident_service),
+    current_user: User = Depends(get_current_user),
 ):
     return service.create_incident(data)
 
 
 # Retrieve all incidents.
+# Retrieve incidents with pagination, filtering and search.
 @router.get("/", response_model=list[IncidentResponse])
 def list_incidents(
+    skip: int = Query(0, ge=0),  # Cannot skip a negative number of records.
+    limit: int = Query(10, ge=1, le=100),  # Restrict page size to 1–100.
+    severity: IncidentSeverity | None = None,
+    incident_status: IncidentStatus | None = Query(None, alias="status"),
+    search: str | None = Query(None, min_length=2, max_length=100),
     service: IncidentService = Depends(get_incident_service),
+    current_user: User = Depends(get_current_user),
 ):
-    return service.list_incidents()
+    return service.list_incidents(
+        skip=skip,
+        limit=limit,
+        severity=severity,
+        status=incident_status,
+        search=search,
+    )
 
 
 # Retrieve one incident by ID.
@@ -74,6 +91,7 @@ def list_incidents(
 def get_incident(
     incident_id: UUID,
     service: IncidentService = Depends(get_incident_service),
+    current_user: User = Depends(get_current_user),
 ):
     return service.get_incident(incident_id)
 
@@ -83,10 +101,17 @@ def get_incident(
     "/{incident_id}/status",
     response_model=IncidentResponse,
 )
+
 def update_incident_status(
     incident_id: UUID,
     data: IncidentStatusUpdate,
     service: IncidentService = Depends(get_incident_service),
+    current_user: User = Depends(
+        require_roles(
+            UserRole.ADMIN,
+            UserRole.INCIDENT_MANAGER,
+        )
+    ),
 ):
     return service.update_status(
         incident_id,

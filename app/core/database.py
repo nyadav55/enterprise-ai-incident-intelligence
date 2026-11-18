@@ -6,6 +6,7 @@
 
 
 import os
+import logging
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
@@ -43,9 +44,20 @@ class Base(DeclarativeBase):
 
 
 # FastAPI dependency: provide a database session and always close it.
+# If a database operation fails during an API request, we can capture the exception and its traceback.
+logger = logging.getLogger("eaiirp")
+
 def get_db():
     db = SessionLocal()
+
     try:
         yield db
+
+    except Exception:
+        # Record database-related errors with traceback.
+        logger.exception("Database session error")
+        raise
+
     finally:
+        # Always release the database connection.
         db.close()

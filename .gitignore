@@ -18,3 +18,10 @@ __pycache__/
 
 # Operating system files
 .DS_Store
+
+# Application logs
+logs/
+*.log
+
+# Local uploaded knowledge documents
+storage/
